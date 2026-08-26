@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import anime from "animejs";
+import { animate, stagger } from "animejs";
 
 // 用法：<AnimatedCardGrid className="dashboard-grid">… hero + 几张卡片 …</AnimatedCardGrid>
 // 同一份"卡片飞入"动画，写一次，到处用。
@@ -10,13 +10,12 @@ export default function AnimatedCardGrid({ className, children }) {
 
   useEffect(() => {
     const cards = ref.current.querySelectorAll(".card");
-    anime({
-      targets: cards,
+    animate(cards, {
       opacity: [0, 1],
       translateY: [24, 0],
-      delay: anime.stagger(120),     // 每张卡错开 120ms
+      delay: stagger(120),     // 每张卡错开 120ms
       duration: 700,
-      easing: "easeOutBack",         // 弹性落地
+      ease: "outBack",         // 弹性落地
     });
   }, []);
 
