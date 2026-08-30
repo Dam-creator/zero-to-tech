@@ -1,4 +1,4 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 
 profile = {
@@ -11,6 +11,7 @@ class Handler(BaseHTTPRequestHandler):
         
         if self.path == "/api/profile":
             self.send_response(200)
+            self.send_header("Access-Control-Allow-Origin", "*")
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             body = json.dumps(profile, ensure_ascii=False)  # ensure_ascii=False：让中文原样输出
@@ -18,7 +19,12 @@ class Handler(BaseHTTPRequestHandler):
         
         else:
             self.send_response(404)
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
+            self.wfile.write(b'{"error": "not found"}')
 
-print("后端已启动：http://localhost:8000/api/profile")
-HTTPServer(("", 8000), Handler).serve_forever()
+if __name__ == "__main__":
+    print("后端已启动：http://localhost:8000/api/profile")
+    # ThreadingHTTPServer：每个请求一个线程，避免一个慢请求卡住所有请求
+    ThreadingHTTPServer(("", 8000), Handler).serve_forever()
