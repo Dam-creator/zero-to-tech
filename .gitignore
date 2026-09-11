@@ -20,3 +20,5 @@ dist/
 
 backend/.venv/
 *.Zone.Identifier
+backend/__pycache__/
+*.pyc

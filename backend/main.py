@@ -1,30 +1,56 @@
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import json
+from email.mime import text
+
+from fastapi import FastAPI
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from pypinyin import lazy_pinyin, Style
+from snownlp import SnowNLP
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["GET", "POST"],
+)
 
 profile = {
     "heroTitle": "关于我",
     "heroSubtitle": "项目，创意，灵感，心得，我的作品",
+    "featuredWork": {
+        "kicker": "作品",
+        "title": "文字实验室",
+        "copy": "拼音和情绪，挖掘中文里的细节",
+        "linkLabel": "打开作品",
+    },
+    "identity": {
+        "motto": "已识乾坤大，尤怜草木青",
+        "learning": "零到全栈",
+    },
 }
 
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        
-        if self.path == "/api/profile":
-            self.send_response(200)
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            body = json.dumps(profile, ensure_ascii=False)  # ensure_ascii=False：让中文原样输出
-            self.wfile.write(body.encode("utf-8"))
-        
-        else:
-            self.send_response(404)
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"error": "not found"}')
+class AnalyzeRequest(BaseModel):
+    text: str
 
-if __name__ == "__main__":
-    print("后端已启动：http://localhost:8000/api/profile")
-    # ThreadingHTTPServer：每个请求一个线程，避免一个慢请求卡住所有请求
-    ThreadingHTTPServer(("", 8000), Handler).serve_forever()
+@app.get("/api/profile")
+def get_profile():
+    return profile
+
+def score_label(score):
+    if score >= 0.7:
+        return "偏积极"
+    elif score <= 0.4:
+        return "偏消极"
+    else:
+        return "中性"
+
+@app.post("/api/analyze")
+def analyze(req: AnalyzeRequest):
+    text = req.text
+    score = round(SnowNLP(text).sentiments, 2) 
+    return {
+        "text": req.text,
+        "score": score,
+        "label": score_label(score),
+        "pinyin": " ".join(lazy_pinyin(text, style=Style.TONE)),
+    }

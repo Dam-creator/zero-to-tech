@@ -14,6 +14,7 @@ import "../css/nav.css";
 import "../css/cards.css";
 import "../css/lab.css";
 import "../css/responsive.css";
+import "../css/chat.css";
 
 export const metadata = {
   title: "zero to tech",
